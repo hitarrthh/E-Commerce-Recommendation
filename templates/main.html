@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerence Recommendation System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .navbar {
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .container {
+        margin-top: 50px;
+    }
+    .video-background {
+        width: 100%;
+        height: 400px; /* Set the height of the video here */
+        object-fit: cover; /* Ensure the video covers the entire container */
+    }
+    .nav-link:hover {
+        color: orange !important; /* Change text color on hover */
+    }
+    .nav-link.btn {
+        border-radius: 5px; /* Add rounded corners to buttons */
+    }
+
+    .modal-content {
+        background-color: #fff; /* Set modal content background color */
+        color: #000; /* Set modal content text color */
+    }
+    .modal-content.dark {
+        background-color: #000; /* Set modal content background color for dark theme */
+        color: #fff; /* Set modal content text color for dark theme */
+    }
+</style>
+<body>
+  <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand mx-auto" href="#">Ecommerce Recommendation System</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item active">
+          <a class="nav-link" href="index"><i class="fas fa-home"></i> Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" id="settingsLink"><i class="fas fa-cog"></i> Settings</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link btn btn-outline-primary mr-2" href="#" data-toggle="modal" data-target="#signupModal">Sign Up</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link btn btn-primary" href="#" data-toggle="modal" data-target="#signinModal">Sign In</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+ <!-- Search Bar -->
+<div class="container" style="margin-top:30px;">
+    <form action="/recommendations" method="post" class="d-flex">
+        <input type="text" class="form-control mr-2" name="prod" placeholder="Search for products..." required>
+        <input type="number" class="form-control mr-2" name="nbr" placeholder="Number of products..." style="width:100px;" min="1" required>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+</div>
+
+{% if message %}
+<h5 style="margin-left:42%; margin-top:10px;">{{message}}</h5>
+{% endif %}
+
+{% if not content_based_rec.empty %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Recommended Products</h2>
+    <div class="row mt-4">
+        {% for index, product in content_based_rec.iterrows() %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card">
+                <img src="{{ product['ImageURL'] }}" class="card-img-top" alt="{{ product['Name'] }}" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ truncate(product['Name'], 12) }}</h5>
+                    <p class="card-text">Brand: {{ product['Brand'] }}</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal{{ index }}">
+                        Buy Now
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="productModal{{ index }}" tabindex="-1" aria-labelledby="productModalLabel{{ index }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="productModalLabel{{ index }}">{{ product['Name'] }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <img src="{{ product['ImageURL'] }}" class="img-fluid" alt="{{ product['Name'] }}" style="height: 200px; object-fit: cover;">
+                            </div>
+                            <div class="col-md-8">
+                                <p><strong>Brand:</strong> {{ product['Brand'] }}</p>
+                                <p><strong>Review Count:</strong> {{ product['ReviewCount'] }}</p>
+                                <p><strong>Rating:</strong> {{ product['Rating'] }}</p>
+                                <p><strong>Price:</strong> ${{ random_price[loop.index0] }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+
+<!-- Bootstrap Modal for Sign Up -->
+<div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg rounded">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="signupModalLabel">Sign Up</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="/signup" method="post" class="needs-validation" novalidate>
+            <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="username" name="username" required>
+              <div class="invalid-feedback">Please enter a valid username.</div>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+              <div class="invalid-feedback">Please provide a valid email address.</div>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="password" name="password" required>
+                <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                  <i class="bi bi-eye-slash"></i>
+                </button>
+                <div class="invalid-feedback">Password is required.</div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bootstrap Modal for Sign In -->
+  <div class="modal fade" id="signinModal" tabindex="-1" aria-labelledby="signinModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg rounded">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="signinModalLabel">Sign In</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="/signin" method="post" class="needs-validation" novalidate>
+            <div class="mb-3">
+              <label for="signin_email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="signin_email" name="email" required>
+              <div class="invalid-feedback">Please provide a valid email address.</div>
+            </div>
+            <div class="mb-3">
+              <label for="signin_password" class="form-label">Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="signin_password" name="password" required>
+                <button type="button" class="btn btn-outline-secondary" id="toggleSignInPassword">
+                  <i class="bi bi-eye-slash"></i>
+                </button>
+                <div class="invalid-feedback">Password is required.</div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Sign In</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <!-- Settings Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h5>Choose Theme:</h5>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="theme" id="defaultTheme" value="default" checked>
+            <label class="form-check-label" for="defaultTheme">Default</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="theme" id="blackTheme" value="black">
+            <label class="form-check-label" for="blackTheme">Black Theme</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="theme" id="customTheme" value="custom">
+            <label class="form-check-label" for="customTheme">Custom Theme</label>
+          </div>
+  
+          <div id="customThemeOptions" style="display: none; margin-top: 15px;">
+            <label for="bgColorPicker" class="form-label">Background Color:</label>
+            <input type="color" id="bgColorPicker" class="form-control mb-2">
+            <label for="textColorPicker" class="form-label">Text Color:</label>
+            <input type="color" id="textColorPicker" class="form-control mb-2">
+          </div>
+  
+          <button type="button" class="btn btn-primary mt-3" id="applyThemeBtn">Apply Theme</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  
+  <!-- JavaScript for Theme Customization -->
+  <script>
+    // Show/hide custom theme options
+    document.getElementById('customTheme').addEventListener('change', function() {
+      document.getElementById('customThemeOptions').style.display = 'block';
+    });
+
+    document.getElementById('defaultTheme').addEventListener('change', function() {
+      document.getElementById('customThemeOptions').style.display = 'none';
+    });
+
+    // Apply theme changes
+    document.getElementById('applyThemeBtn').addEventListener('click', function() {
+      const selectedTheme = document.querySelector('input[name="theme"]:checked').value;
+      if (selectedTheme === 'custom') {
+        const bgColor = document.getElementById('bgColorPicker').value;
+        const textColor = document.getElementById('textColorPicker').value;
+        document.body.style.backgroundColor = bgColor;
+        document.body.style.color = textColor;
+      } else if (selectedTheme === 'black') {
+        document.body.style.backgroundColor = '#000';
+        document.body.style.color = '#fff';
+      } else {
+        document.body.style.backgroundColor = '';
+        document.body.style.color = '';
+      }
+      $('#settingsModal').modal('hide'); // Close the modal
+    });
+
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('password');
+      const icon = this.querySelector('i');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+      }
+    });
+
+    document.getElementById('toggleSignInPassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('signin_password');
+      const icon = this.querySelector('i');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+      }
+    });
+  </script>
+</body>
+</html>
